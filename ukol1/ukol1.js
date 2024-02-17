@@ -5,7 +5,6 @@ const maxNumberOfAttempts = 5;
 const prompt = require('prompt-sync')({sigint: true});
 // *
 
-//asdfasdfasdf
 /**
  * Generates a random int number within given interval.
  * @param min
