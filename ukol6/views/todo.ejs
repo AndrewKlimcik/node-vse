@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css"
+              integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title><%= todo.title %></title>
+    </head>
+    <body>
+        <h1><%= todo.title %></h1>
+        <p>Priorita: <%= todo.priority %></p>
+        <p>Stav: <%= todo.done ? 'Hotovo' : 'Nehotovo' %></p>
+        <a href="/toggle-todo/<%= todo.id %>">Změnit stav</a>
+        <a href="/remove-todo/<%= todo.id %>">Odstranit</a>
+
+        <!-- Formulář pro úpravu titulku a priority todočka -->
+        <form method="post" action="/update-todo/<%= todo.id %>">
+            <div class="form-group">
+                <label for="title">Titulek:</label>
+                <input type="text" id="title" name="title" value="<%= todo.title %>" class="form-control">
+            </div>
+
+            <div class="form-group">
+                <label for="priority">Priorita:</label>
+                <select name="priority" id="priority" class="form-control">
+                    <option value="low" <%= todo.priority === 'low' ? 'selected' : '' %>>Low</option>
+                    <option value="normal" <%= todo.priority === 'normal' ? 'selected' : '' %>>Normal</option>
+                    <option value="high" <%= todo.priority === 'high' ? 'selected' : '' %>>High</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Upravit</button>
+        </form>
+
+        <a href="/">Zpět na seznam</a>
+    </body>
+</html>
