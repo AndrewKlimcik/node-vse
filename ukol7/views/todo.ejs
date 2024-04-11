@@ -33,4 +33,19 @@
             <hr>
         <a href="/">Zpět na seznam</a>
     </body>
+    <script>
+        ws.addEventListener('message', (ev) => {
+            const data = JSON.parse(ev.data);
+
+            if (data.type === 'todoList') {
+                // Aktualizujte váš seznam todočků...
+            } else if (data.type === 'todoDetails' && viewingTodoId === data.todoId) {
+                // Aktualizujte detail zobrazeného todočka...
+            } else if (data.type === 'todoDeleted' && viewingTodoId === data.todoId) {
+                // Todočko bylo smazáno, informujte uživatele a možná přesměrujte nebo skryjte detaily.
+                alert('Todočko bylo smazáno.');
+                // Přesměrování nebo skrytí detailů...
+            }
+        });
+    </script>
 </html>

@@ -1,6 +1,8 @@
-import express from 'express'
-import {db, getAllTodos, getTodoById} from './src/db.js'
-import {createWebSocketServer, sendTodoListToAllConnections} from './src/websockets.js'
+import express from 'express';
+import {db, getAllTodos, getTodoById} from './src/db.js';
+import {createWebSocketServer, sendTodoListToAllConnections} from './src/websockets.js';
+import {sendTodoDetailsToConnections} from './src/websockets.js';
+
 
 const app = express()
 
@@ -39,9 +41,12 @@ app.post('/add-todo', async (req, res) => {
         done: false,
     }
 
-    await db('todos').insert(todo)
+    await db('todos').insert(todo);
 
-    res.redirect('/')
+    // update for clients
+    await sendTodoListToAllConnections();
+
+    res.redirect('/');
 })
 
 app.post('/update-todo/:id', async (req, res, next) => {
@@ -54,7 +59,11 @@ app.post('/update-todo/:id', async (req, res, next) => {
     if (req.body.title) query.update({title: req.body.title})
     if (req.body.priority) query.update({priority: req.body.priority})
 
-    await query
+    await query;
+
+    // update for clients
+    await sendTodoListToAllConnections();
+    await sendTodoDetailsToConnections(req.params.id);
 
     res.redirect('back')
 })
@@ -62,11 +71,12 @@ app.post('/update-todo/:id', async (req, res, next) => {
 app.get('/remove-todo/:id', async (req, res) => {
     const todo = await getTodoById(req.params.id)
 
-    if (!todo) return next()
+    if (!todo) return next();
 
     await db('todos').delete().where('id', todo.id)
 
-    sendTodoListToAllConnections()
+    // update for clients
+    await sendTodoListToAllConnections();
 
     res.redirect('/')
 })
@@ -78,21 +88,21 @@ app.get('/toggle-todo/:id', async (req, res, next) => {
 
     await db('todos').update({done: !todo.done}).where('id', todo.id)
 
-    sendTodoListToAllConnections()
+    // update for clients
+    await sendTodoListToAllConnections();
+    await sendTodoDetailsToConnections(req.params.id);
 
     res.redirect('back')
 })
 
-app.use((req, res) => {
-    res.status(404)
-    res.send('404 - Stránka nenalezena')
-})
+app.use((req, res, next) => {
+    res.status(404).send('Stránka nenalezena');
+});
 
 app.use((err, req, res, next) => {
-    console.error(err)
-    res.status(500)
-    res.send('500 - Chyba na straně serveru')
-})
+    console.error(err.stack);
+    res.status(500).send('Něco se pokazilo!');
+});
 
 app.locals.translatePriority = (priority) => {
     switch (priority) {
