@@ -1,7 +1,7 @@
 import express from 'express';
 import {db, getAllTodos, getTodoById} from './src/db.js';
 import {createWebSocketServer, sendTodoListToAllConnections} from './src/websockets.js';
-import {sendTodoDetailsToConnections} from './src/websockets.js';
+import {sendtodoDetailsToConnections} from './src/websockets.js';
 
 
 const app = express()
@@ -50,23 +50,24 @@ app.post('/add-todo', async (req, res) => {
 })
 
 app.post('/update-todo/:id', async (req, res, next) => {
-    const todo = await getTodoById(req.params.id)
+    const todo = await getTodoById(req.params.id);
 
-    if (!todo) return next()
+    if (!todo) return next();
 
-    const query = db('todos').where('id', todo.id)
+    const updatedData = {};
+    if (req.body.title) updatedData.title = req.body.title;
+    if (req.body.priority) updatedData.priority = req.body.priority;
 
-    if (req.body.title) query.update({title: req.body.title})
-    if (req.body.priority) query.update({priority: req.body.priority})
+    await db('todos').where('id', req.params.id).update(updatedData);
 
-    await query;
+    // update for clients viewing the todo details
+    await sendtodoDetailsToConnections(req.params.id);
 
-    // update for clients
+    // update todo list for all clients
     await sendTodoListToAllConnections();
-    await sendTodoDetailsToConnections(req.params.id);
 
-    res.redirect('back')
-})
+    res.redirect('back');
+});
 
 app.get('/remove-todo/:id', async (req, res) => {
     const todo = await getTodoById(req.params.id)
@@ -78,7 +79,7 @@ app.get('/remove-todo/:id', async (req, res) => {
     // update for clients
     await sendTodoListToAllConnections();
 
-    res.redirect('/')
+    res.redirect('/');
 })
 
 app.get('/toggle-todo/:id', async (req, res, next) => {
@@ -90,7 +91,7 @@ app.get('/toggle-todo/:id', async (req, res, next) => {
 
     // update for clients
     await sendTodoListToAllConnections();
-    await sendTodoDetailsToConnections(req.params.id);
+    await sendtodoDetailsToConnections(req.params.id);
 
     res.redirect('back')
 })

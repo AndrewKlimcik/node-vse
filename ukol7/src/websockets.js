@@ -9,16 +9,18 @@ export const createWebSocketServer = (server) => {
 
     wss.on('connection', (socket) => {
         connections.set(socket, {});
+        console.log('New connection', connections.size);
 
         socket.on('message', (message) => {
-            const {type, todoId} = JSON.parse(message);
-            if (type === 'viewingTodo') {
-                connections.get(socket).viewingTodoId = todoId;
-            }
+            const url = message.toString();
+            const id = url.split('/').pop();
+            console.log('connection on todo id', id);
+            connections.set(socket, id);
         });
 
         socket.on('close', () => {
             connections.delete(socket);
+            console.log('Close connection', connections.size);
         });
     });
 };
@@ -46,34 +48,20 @@ export const sendTodoListToAllConnections = async () => {
  * @param todoId
  * @returns {Promise<void>}
  */
-export const sendTodoDetailsToConnections = async (todoId) => {
-    const todoDetails = await ejs.renderFile('views/todo.ejs', {
-        todo: await getTodoById(todoId),
-        // translating priroty
-        translatePriority: (priority) => {
-            switch (priority) {
-                case 'low':
-                    return 'nízká';
-                case 'normal':
-                    return 'normální';
-                case 'high':
-                    return 'vysoká';
-                default:
-                    return 'neznámá';
-            }
-        }
+export const sendtodoDetailsToConnections = async (todoId) => {
+    const todoDetails = await ejs.renderFile('views/_todo.ejs', {
+        todo: await getTodoById(todoId)
     });
 
-    connections.forEach((data, connection) => {
-        if (data.viewingTodoId === todoId.toString()) {
-            // WebSocket.OPEN same as 1
-            if (connection.readyState === 1) {
-                connection.send(JSON.stringify({
-                    type: 'todoDetails',
-                    html: todoDetails,
-                }));
-            }
-        }
-    });
+    for (const [connection, connectionId] of connections) {
+        console.log('connnectionId', connectionId);
+        console.log('todoId', todoId);
+        if (connectionId === todoId)
+        connection.send(
+            JSON.stringify({
+                type: 'todoDetails',
+                html: todoDetails,
+        }));
+    };
 };
 
